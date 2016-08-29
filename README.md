@@ -31,6 +31,7 @@ go-* packages
 | ------------------|:---------------------:|
 | [go-errors](https://github.com/kataras/go-errors)      | Error handling
 | [go-events](https://github.com/kataras/go-events) | EventEmmiter for Go
+| [go-installer](https://github.com/kataras/go-installer) | Download & Install remote zipped files
 | [go-websocket](https://github.com/kataras/go-errors) | A websocket server and ,optionally, client side lib  for Go
 | [go-ssh](https://github.com/kataras/go-ssh) | SSH Server, build ssh interfaces, remote commands and remote cli with ease
 | [go-gzipwriter](https://github.com/kataras/go-gzipwriter) | Write gzip data to a io.Writer

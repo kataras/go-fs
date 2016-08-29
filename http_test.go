@@ -11,11 +11,11 @@ import (
 )
 
 func TestStaticContentHandler(t *testing.T) {
-	req, err := http.NewRequest("GET", "/fs.go", nil)
+	req, err := http.NewRequest("GET", "/http.go", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	contents, err := ioutil.ReadFile("./fs.go")
+	contents, err := ioutil.ReadFile("./http.go")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestStaticContentHandler(t *testing.T) {
 }
 
 func TestDirHandler(t *testing.T) {
-	req, err := http.NewRequest("GET", "/fs.go", nil)
+	req, err := http.NewRequest("GET", "/http.go", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
