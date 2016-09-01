@@ -45,7 +45,7 @@ func TestDirHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	h := DirHandler("./", "", false)
+	h := DirHandler("./", "")
 	res := httptest.NewRecorder()
 	h.ServeHTTP(res, req)
 

@@ -15,7 +15,7 @@ import (
 
 const (
 	// Version current version number
-	Version = "0.0.1"
+	Version = "0.0.2"
 )
 
 // PathSeparator is the OS-specific path separator
@@ -68,7 +68,7 @@ var (
 
 // RemoveFile removes a file or directory and returns an error, if any
 func RemoveFile(filePath string) error {
-	return errFileRemove.Format(os.RemoveAll(filePath))
+	return errFileRemove.With(os.RemoveAll(filePath))
 }
 
 // RenameDir renames (moves) oldpath to newpath.

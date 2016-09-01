@@ -150,10 +150,14 @@ const slash = "/"
 // DirHandler serves a directory as web resource
 // accepts a system Directory (string),
 // a string which will be stripped off if not empty and
-// a boolean  if true then content is served using the gzip compression method
 // Note 1: this is a dynamic dir handler, means that if a new file is added to the folder it will be served
 // Note 2: it doesn't cache the system files, use it with your own risk, otherwise you can use the http.FileServer method, which is different of what I'm trying to do here.
-func DirHandler(dir string, strippedPrefix string, gzip bool) http.Handler {
+// example:
+// staticHandler := http.FileServer(http.Dir("static"))
+// http.Handle("/static/", http.StripPrefix("/static/", staticHandler))
+// converted to ->
+// http.Handle("/static/", fs.DirHandler("./static", "/static/"))
+func DirHandler(dir string, strippedPrefix string) http.Handler {
 	if dir == "" {
 		return errorHandler(http.StatusNoContent)
 	}
@@ -179,11 +183,6 @@ func DirHandler(dir string, strippedPrefix string, gzip bool) http.Handler {
 		}
 		http.ServeFile(res, req, fpath)
 	})
-
-	if strippedPrefix != "" {
-		return http.StripPrefix(strippedPrefix, h)
-	}
-
-	return h
-
+	// the stripprefix handler checks for empty prefix so
+	return http.StripPrefix(strippedPrefix, h)
 }
