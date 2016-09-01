@@ -1,6 +1,6 @@
 <a href="https://travis-ci.org/kataras/go-fs"><img src="https://img.shields.io/travis/kataras/go-fs.svg?style=flat-square" alt="Build Status"></a>
 <a href="https://github.com/kataras/go-fs/blob/master/LICENSE"><img src="https://img.shields.io/badge/%20license-MIT%20%20License%20-E91E63.svg?style=flat-square" alt="License"></a>
-<a href="https://github.com/kataras/go-fs/releases"><img src="https://img.shields.io/badge/%20release%20-%20v0.0.2-blue.svg?style=flat-square" alt="Releases"></a>
+<a href="https://github.com/kataras/go-fs/releases"><img src="https://img.shields.io/badge/%20release%20-%20v0.0.3-blue.svg?style=flat-square" alt="Releases"></a>
 <a href="#docs"><img src="https://img.shields.io/badge/%20docs-reference-5272B4.svg?style=flat-square" alt="Read me docs"></a>
 <a href="https://kataras.rocket.chat/channel/go-fs"><img src="https://img.shields.io/badge/%20community-chat-00BCD4.svg?style=flat-square" alt="Build Status"></a>
 <a href="https://golang.org"><img src="https://img.shields.io/badge/powered_by-Go-3362c2.svg?style=flat-square" alt="Built with GoLang"></a>
@@ -22,7 +22,221 @@ $ go get -u github.com/kataras/go-fs
 Docs
 ------------
 
-You do not need any special explanations for this package, just navigate to the [godoc](https://godoc.org/github.com/kataras/go-fs) or the [source code](https://github.com/kataras/go-fs/blob/master/http_test.go).
+
+### Local file system helpers
+
+```go
+// DirectoryExists returns true if a directory(or file) exists, otherwise false
+DirectoryExists(dir string) bool
+
+// GetHomePath returns the user's $HOME directory
+GetHomePath() string
+
+// GetParentDir returns the parent directory of the passed targetDirectory
+GetParentDir(targetDirectory string) string
+
+// RemoveFile removes a file or a directory
+RemoveFile(filePath string) error
+
+// RenameDir renames (moves) oldpath to newpath.
+// If newpath already exists, Rename replaces it.
+// OS-specific restrictions may apply when oldpath and newpath are in different directories.
+// If there is an error, it will be of type *LinkError.
+//
+// It's a copy of os.Rename
+RenameDir(oldPath string, newPath string) error
+
+// CopyFile  accepts full path of the source and full path of destination, if file exists it's overrides it
+// this function doesn't checks for permissions and all that, it returns an error
+CopyFile(source string, destination string) error
+
+// CopyDir recursively copies a directory tree, attempting to preserve permissions.
+// Source directory must exist.
+CopyDir(source string, dest string)  error
+
+// Unzip extracts a zipped file to the target location
+// returns the path of the created folder (if any) and an error (if any)
+Unzip(archive string, target string) (string, error)
+
+// TypeByExtension returns the MIME type associated with the file extension ext.
+// The extension ext should begin with a leading dot, as in ".html".
+// When ext has no associated type, TypeByExtension returns "".
+//
+// Extensions are looked up first case-sensitively, then case-insensitively.
+//
+// The built-in table is small but on unix it is augmented by the local
+// system's mime.types file(s) if available under one or more of these
+// names:
+//
+//   /etc/mime.types
+//   /etc/apache2/mime.types
+//   /etc/apache/mime.types
+//
+// On Windows, MIME types are extracted from the registry.
+//
+// Text types have the charset parameter set to "utf-8" by default.
+TypeByExtension(fullfilename string) string
+
+```
+
+### Net/http handlers
+
+```go
+// FaviconHandler receives the favicon path and serves the favicon
+FaviconHandler(favPath string) http.Handler
+
+// StaticContentHandler returns the net/http.Handler interface to handle raw binary data,
+// normally the data parameter was read by custom file reader or by variable
+StaticContentHandler(data []byte, contentType string) http.Handler
+
+// StaticFileHandler serves a static file such as css,js, favicons, static images
+// it stores the file contents to the memory, doesn't supports seek because we read all-in-one the file, but seek is supported by net/http.ServeContent
+StaticFileHandler(filename string) http.Handler
+
+// SendStaticFileHandler sends a file for force-download to the client
+// it stores the file contents to the memory, doesn't supports seek because we read all-in-one the file, but seek is supported by net/http.ServeContent
+SendStaticFileHandler(filename string) http.Handler
+
+// DirHandler serves a directory as web resource
+// accepts a system Directory (string),
+// a string which will be stripped off if not empty and
+// Note 1: this is a dynamic dir handler, means that if a new file is added to the folder it will be served
+// Note 2: it doesn't cache the system files, use it with your own risk, otherwise you can use the http.FileServer method, which is different of what I'm trying to do here.
+// example:
+// staticHandler := http.FileServer(http.Dir("static"))
+// http.Handle("/static/", http.StripPrefix("/static/", staticHandler))
+// converted to ->
+// http.Handle("/static/", fs.DirHandler("./static", "/static/"))
+DirHandler(dir string, strippedPrefix string) http.Handler
+```
+
+Read the [http_test.go](https://github.com/kataras/go-fs/blob/master/http_test.go) for more.
+
+
+### Working with remote zip files
+
+```go
+// DownloadZip downloads a zip file returns the downloaded filename and an error.
+DownloadZip(zipURL string, newDir string, showOutputIndication bool) (string, error)
+
+// Install is just the flow of: downloadZip -> unzip -> removeFile(zippedFile)
+// accepts 3 parameters
+//
+// first parameter is the remote url file zip
+// second parameter is the target directory
+// third paremeter is a boolean which you can set to true to print out the progress
+// returns a string(installedDirectory) and an error
+//
+// (string) installedDirectory is the directory which the zip file had, this is the real installation path
+// the installedDirectory is not empty when the installation is succed, the targetDirectory is not already exists and no error happens
+// the installedDirectory is empty when the installation is already done by previous time or an error happens
+Install(remoteFileZip string, targetDirectory string, showOutputIndication bool) (string, error)
+```
+
+> Install = DownloadZip -> Unzip to the destination folder, remove the downloaded .zip, copy the inside extracted folder to the destination
+
+Install many remote files(URI) to a single destination folder via installer instance
+
+```go
+type Installer struct {
+	// InstallDir is the directory which all zipped downloads will be extracted
+	// defaults to $HOME path
+	InstallDir string
+	// Indicator when it's true it shows an indicator about the installation process
+	// defaults to false
+	Indicator bool
+	// RemoteFiles is the list of the files which should be downloaded when Install() called
+	RemoteFiles []string
+}
+
+// Add adds a remote file(*.zip) to the list for download
+Add(...string)
+
+// Install installs all RemoteFiles, when this function called then the RemoteFiles are being resseted
+// returns all installed paths and an error (if any)
+// it continues on errors and returns them when the operation completed
+Install() ([]string, error)
+```
+
+**Usage**
+
+```go
+package main
+
+import "github.com/kataras/go-fs"
+
+var testInstalledDir = fs.GetHomePath() + fs.PathSeparator + "mydir" + fs.PathSeparator
+
+// remote file zip | expected output(installed) directory
+var filesToInstall = map[string]string{
+	"https://github.com/kataras/q/archive/master.zip":             testInstalledDir + "q-master",
+	"https://github.com/kataras/iris/archive/master.zip":          testInstalledDir + "iris-master",
+	"https://github.com/kataras/go-errors/archive/master.zip":     testInstalledDir + "go-errors-master",
+	"https://github.com/kataras/go-gzipwriter/archive/master.zip": testInstalledDir + "go-gzipwriter-master",
+	"https://github.com/kataras/go-events/archive/master.zip":     testInstalledDir + "go-events-master",
+}
+
+func main() {
+	myInstaller := fs.NewInstaller(testInstalledDir)
+
+	for remoteURI := range filesToInstall {
+		myInstaller.Add(remoteURI)
+	}
+
+	installedDirs, err := myInstaller.Install()
+
+	if err != nil {
+		panic(err)
+	}
+
+	for _, installedDir := range installedDirs {
+    println("New folder created: " + installedDir)
+	}
+
+}
+
+```
+
+When you want to install different zip files to different destination directories.
+
+**Usage**
+
+```go
+package main
+
+import "github.com/kataras/go-fs"
+
+var testInstalledDir = fs.GetHomePath() + fs.PathSeparator + "mydir" + fs.PathSeparator
+
+// remote file zip | expected output(installed) directory
+var filesToInstall = map[string]string{
+	"https://github.com/kataras/q/archive/master.zip":             testInstalledDir + "q-master",
+	"https://github.com/kataras/iris/archive/master.zip":          testInstalledDir + "iris-master",
+	"https://github.com/kataras/go-errors/archive/master.zip":     testInstalledDir + "go-errors-master",
+	"https://github.com/kataras/go-gzipwriter/archive/master.zip": testInstalledDir + "go-gzipwriter-master",
+	"https://github.com/kataras/go-events/archive/master.zip":     testInstalledDir + "go-events-master",
+}
+
+func main(){
+	for remoteURI, expectedInstalledDir := range filesToInstall {
+
+		installedDir, err := fs.Install(remoteURI, testInstalledDir, false)
+
+		if err != nil {
+			panic(err)
+		}
+		println("Installed: "+installedDir)
+	}
+}
+
+```
+
+Read the [installer_test.go](https://github.com/kataras/go-fs/blob/master/installer_test.go) for more.
+
+
+
+You do not need any other special explanations for this package, just navigate to the [godoc](https://godoc.org/github.com/kataras/go-fs) or the [source](https://github.com/kataras/go-fs/blob/master/http_test.go) [code](https://github.com/kataras/go-fs/blob/master/installer_test.go).
+
 
 go-* packages
 ------------
@@ -31,7 +245,6 @@ go-* packages
 | ------------------|:---------------------:|
 | [go-errors](https://github.com/kataras/go-errors)      | Error handling
 | [go-events](https://github.com/kataras/go-events) | EventEmmiter for Go
-| [go-installer](https://github.com/kataras/go-installer) | Download & Install remote zipped files
 | [go-websocket](https://github.com/kataras/go-errors) | A websocket server and ,optionally, client side lib  for Go
 | [go-ssh](https://github.com/kataras/go-ssh) | SSH Server, build ssh interfaces, remote commands and remote cli with ease
 | [go-gzipwriter](https://github.com/kataras/go-gzipwriter) | Write gzip data to a io.Writer
@@ -48,7 +261,7 @@ Explore [these questions](https://github.com/kataras/go-fs/issues?go-fs=label%3A
 Versioning
 ------------
 
-Current: **v0.0.2**
+Current: **v0.0.3**
 
 
 
@@ -76,7 +289,7 @@ License can be found [here](LICENSE).
 [Travis]: http://travis-ci.org/kataras/go-fs
 [License Widget]: https://img.shields.io/badge/license-MIT%20%20License%20-E91E63.svg?style=flat-square
 [License]: https://github.com/kataras/go-fs/blob/master/LICENSE
-[Release Widget]: https://img.shields.io/badge/release-v0.0.2-blue.svg?style=flat-square
+[Release Widget]: https://img.shields.io/badge/release-v0.0.3-blue.svg?style=flat-square
 [Release]: https://github.com/kataras/go-fs/releases
 [Chat Widget]: https://img.shields.io/badge/community-chat-00BCD4.svg?style=flat-square
 [Chat]: https://kataras.rocket.chat/channel/go-fs

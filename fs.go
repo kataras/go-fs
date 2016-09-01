@@ -15,7 +15,7 @@ import (
 
 const (
 	// Version current version number
-	Version = "0.0.2"
+	Version = "0.0.3"
 )
 
 // PathSeparator is the OS-specific path separator
@@ -81,8 +81,8 @@ func RenameDir(oldPath string, newPath string) error {
 	return os.Rename(oldPath, newPath)
 }
 
-// CopyFile copy a file, accepts full path of the source and full path of destination, if file exists it's overrides it
-// this function doesn't checks for permissions and all that, it returns an error if didn't worked
+// CopyFile accepts full path of the source and full path of destination, if file exists it's overrides it
+// this function doesn't checks for permissions and all that, it returns an error
 func CopyFile(source string, destination string) error {
 	reader, err := os.Open(source)
 
@@ -114,8 +114,6 @@ func CopyFile(source string, destination string) error {
 
 // CopyDir recursively copies a directory tree, attempting to preserve permissions.
 // Source directory must exist.
-//
-// Note: the CopyDir function was not written by me, but its working well
 func CopyDir(source string, dest string) (err error) {
 
 	// get properties of source dir
@@ -159,8 +157,6 @@ func CopyDir(source string, dest string) (err error) {
 }
 
 // Unzip extracts a zipped file to the target location
-//
-// it removes the zipped file after unzip action successfully completed
 // returns the path of the created folder (if any) and an error (if any)
 func Unzip(archive string, target string) (string, error) {
 	reader, err := zip.OpenReader(archive)
