@@ -1,6 +1,6 @@
 <a href="https://travis-ci.org/kataras/go-fs"><img src="https://img.shields.io/travis/kataras/go-fs.svg?style=flat-square" alt="Build Status"></a>
 <a href="https://github.com/kataras/go-fs/blob/master/LICENSE"><img src="https://img.shields.io/badge/%20license-MIT%20%20License%20-E91E63.svg?style=flat-square" alt="License"></a>
-<a href="https://github.com/kataras/go-fs/releases"><img src="https://img.shields.io/badge/%20release%20-%20v0.0.3-blue.svg?style=flat-square" alt="Releases"></a>
+<a href="https://github.com/kataras/go-fs/releases"><img src="https://img.shields.io/badge/%20release%20-%20v0.0.4-blue.svg?style=flat-square" alt="Releases"></a>
 <a href="#docs"><img src="https://img.shields.io/badge/%20docs-reference-5272B4.svg?style=flat-square" alt="Read me docs"></a>
 <a href="https://kataras.rocket.chat/channel/go-fs"><img src="https://img.shields.io/badge/%20community-chat-00BCD4.svg?style=flat-square" alt="Build Status"></a>
 <a href="https://golang.org"><img src="https://img.shields.io/badge/powered_by-Go-3362c2.svg?style=flat-square" alt="Built with GoLang"></a>
@@ -111,6 +111,115 @@ DirHandler(dir string, strippedPrefix string) http.Handler
 ```
 
 Read the [http_test.go](https://github.com/kataras/go-fs/blob/master/http_test.go) for more.
+
+### Gzip Writer
+Writes gzip compressed content to an underline io.Writer. It uses sync.Pool to reduce memory allocations.
+
+**Better performance** through klauspost/compress package which provides us a gzip.Writer which is faster than Go standard's gzip package's writer.
+
+```go
+// NewGzipPool returns a new gzip writer pool, ready to use
+NewGzipPool(Level int) *GzipPool
+
+// DefaultGzipPool returns a new writer pool with Compressor's level setted to DefaultCompression
+DefaultGzipPool() *GzipPool
+
+// AcquireGzipWriter prepares a gzip writer and returns it
+//
+// see ReleaseGzipWriter
+AcquireGzipWriter(w io.Writer) *gzip.Writer
+
+// ReleaseGzipWriter called when flush/close and put the gzip writer back to the pool
+//
+// see AcquireGzipWriter
+ReleaseGzipWriter(gzipWriter *gzip.Writer)
+
+// WriteGzip writes a compressed form of p to the underlying io.Writer. The
+// compressed bytes are not necessarily flushed until the Writer is closed
+WriteGzip(w io.Writer, b []byte) (int, error)
+
+```
+
+
+- `AcquireGzipWriter` get a gzip writer, create new if no free writer available from inside the pool (sync.Pool).
+- `ReleaseGzipWriter` releases puts a gzip writer to the pool (sync.Pool).
+- `WriteGzip` gets a gzip writer, writes a compressed form of p to the underlying io.Writer. The
+ compressed bytes are not necessarily flushed until the Writer is closed. Finally it Releases the particular gzip writer.
+
+  > if these called from package level then the default gzip writer's pool is used to get/put and write
+
+- `NewGzipPool` receives a compression level and returns a new gzip writer pool
+- `DefaultGzipPool` returns a new gzip writer pool with DefaultCompression as the Compressor's Level
+
+> New & Default are optional, use them to create more than one sync.Pool, if you expect thousands of writers working together
+
+
+ Using default pool's writer to compress & write content
+
+ ```go
+ import "github.com/kataras/go-fs"
+
+ var writer io.Writer
+
+ // ... using default package's Pool to get a gzip writer
+ n, err := fs.WriteGzip(writer, []byte("Compressed data and content here"))
+ ```
+
+ Using default Pool to get a gzip writer, compress & write content and finally release manually the gzip writer to the default Pool
+
+ ```go
+ import "github.com/kataras/go-fs"
+
+ var writer io.Writer
+
+ // ... using default writer's pool to get a gzip.Writer
+
+ mygzipWriter := fs.AcquireGzipWriter(writer) // get a gzip.Writer from the default gzipwriter Pool
+
+ n, err := mygzipWriter.WriteGzip([]byte("Compressed data and content here"))
+
+ gzipwriter.ReleaseGzipWriter(mygzipWriter) // release this gzip.Writer to the default gzipwriter package's gzip writer Pool (sync.Pool)
+ ```
+
+Create and use a totally new gzip writer Pool
+
+```go
+import "github.com/kataras/go-fs"
+
+var writer io.Writer
+var gzipWriterPool = fs.NewGzipPool(fs.DefaultCompression)
+
+// ...
+n, err := gzipWriterPool.WriteGzip(writer, []byte("Compressed data and content here"))
+```
+
+Get a gzip writer Pool with the default options(compressor's Level)
+
+```go
+import "github.com/kataras/go-fs"
+
+var writer io.Writer
+var gzipWriterPool = fs.DefaultGzipPool() // returns a new default gzip writer pool
+
+// ...
+n, err := gzipWriterPool.WriteGzip(writer, []byte("Compressed data and content here"))
+```
+
+Acquire, Write and Release from a new(`.NewGzipPool/.DefaultGzipPool`) gzip writer Pool
+
+ ```go
+ import "github.com/kataras/go-fs"
+
+ var writer io.Writer
+
+ var gzipWriterPool = fs.DefaultGzipPool() // returns a new default gzip writer pool
+
+ mygzipWriter := gzipWriterPool.AcquireGzipWriter(writer) // get a gzip.Writer from the new gzipWriterPool
+
+ n, err := mygzipWriter.WriteGzip([]byte("Compressed data and content here"))
+
+ gzipWriterPool.ReleaseGzipWriter(mygzipWriter) // release this gzip.Writer to the gzipWriterPool (sync.Pool)
+ ```
 
 
 ### Working with remote zip files
@@ -261,7 +370,7 @@ Explore [these questions](https://github.com/kataras/go-fs/issues?go-fs=label%3A
 Versioning
 ------------
 
-Current: **v0.0.3**
+Current: **v0.0.4**
 
 
 
@@ -289,7 +398,7 @@ License can be found [here](LICENSE).
 [Travis]: http://travis-ci.org/kataras/go-fs
 [License Widget]: https://img.shields.io/badge/license-MIT%20%20License%20-E91E63.svg?style=flat-square
 [License]: https://github.com/kataras/go-fs/blob/master/LICENSE
-[Release Widget]: https://img.shields.io/badge/release-v0.0.3-blue.svg?style=flat-square
+[Release Widget]: https://img.shields.io/badge/release-v0.0.4-blue.svg?style=flat-square
 [Release]: https://github.com/kataras/go-fs/releases
 [Chat Widget]: https://img.shields.io/badge/community-chat-00BCD4.svg?style=flat-square
 [Chat]: https://kataras.rocket.chat/channel/go-fs
