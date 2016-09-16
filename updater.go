@@ -149,8 +149,8 @@ func (u *Updater) Run(setters ...optionSetter) bool {
 				writef("\nError while trying to get the package: %s.", err.Error())
 			}
 
-			writef("\010\010\010\010") // remove the loading bars
-			writef("Update has been installed, current version: %s. Please re-run your App.", u.latestVersion.String())
+			writef("\010\010\010") // remove the loading bars
+			writef("Update has been installed, current version: %s. Please re-start your App.\n", u.latestVersion.String())
 
 			// TODO: normally, this should be in dev-mode machine, so a 'go build' and' & './$executable' on the current working path should be ok
 			// for now just log a message to re-run the app manually
