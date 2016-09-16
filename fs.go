@@ -15,7 +15,7 @@ import (
 
 const (
 	// Version current version number
-	Version = "0.0.4"
+	Version = "0.0.5"
 )
 
 // PathSeparator is the OS-specific path separator

@@ -109,13 +109,6 @@ func DownloadZip(zipURL string, newDir string, showOutputIndication bool) (strin
 // the installedDirectory is empty when the installation is already done by previous time or an error happens
 func Install(remoteFileZip string, targetDirectory string, showOutputIndication bool) (installedDirectory string, err error) {
 	var zipFile string
-	/*
-		targetDirectory = filepath.ToSlash(targetDirectory)
-		if targetDirectory[len(targetDirectory)-1] != os.PathSeparator {
-			targetDirectory += PathSeparator
-		}
-	*/
-
 	zipFile, err = DownloadZip(remoteFileZip, targetDirectory, showOutputIndication)
 	if err == nil {
 		installedDirectory, err = Unzip(zipFile, targetDirectory)
@@ -175,21 +168,18 @@ func (i *Installer) Install() ([]string, error) {
 	// clear the installers's remote files
 	i.mu.Lock()
 	i.RemoteFiles = nil
-	i.mu.Unlock()
 
 	for _, remoteFileZip := range remoteFiles {
 		p, err := Install(remoteFileZip, i.InstallDir, i.Indicator)
 		if err != nil {
 			allErrors = allErrors.AppendErr(err)
 			// add back the remote file if the install of this remote file has failed
-			i.mu.Lock()
 			i.RemoteFiles = append(i.RemoteFiles, remoteFileZip)
-			i.mu.Unlock()
 		}
 
 		installedDirectories = append(installedDirectories, p)
 	}
-
+	i.mu.Unlock()
 	if !allErrors.IsAppended() {
 		return installedDirectories, nil
 	}
