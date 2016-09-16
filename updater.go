@@ -9,14 +9,35 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"time"
 )
 
 // updater.go Go app updater hosted on github, based on 'releases & tags',
 // unique and simple source code, no signs or other 'secure' methods.
 //
+// Note: the previous installed files(in $GOPATH) should not be edited before, if edited the go get tool will fail to upgrade these packages.
+//
 // tag name (github version) should be compatible with the Semantic Versioning 2.0.0
 // Read more about Semantic Versioning 2.0.0: http://semver.org/
+//
+// quick example:
+// package main
+//
+// import (
+// 	"github.com/kataras/go-fs"
+// 	"fmt"
+// )
+//
+// func main(){
+// 	fmt.Println("Current version is: 0.0.3")
+//
+// 	updater, err := fs.GetUpdater("kataras","rizla", "0.0.3")
+// 	if err !=nil{
+// 		panic(err)
+// 	}
+//
+// 	updated := updater.Run()
+// 	_ = updated
+// }
 
 var (
 	errUpdaterUnknown = errors.New("Updater: Unknown error: %s")
@@ -37,7 +58,7 @@ func GetUpdater(owner string, repo string, currentReleaseVersion string) (*Updat
 	client := github.NewClient(nil) // unuthenticated client, 60 req/hour
 	///TODO: rate limit error catching( impossible to same client checks 60 times for github updates, but we should do that check)
 
-	// get the latest release
+	// get the latest release, delay depends on the user's internet connection's download speed
 	latestRelease, response, err := client.Repositories.GetLatestRelease(owner, repo)
 	if err != nil {
 		return nil, errCantFetchRepo.Format(owner+":"+repo, err)
@@ -76,13 +97,11 @@ func (u *Updater) HasUpdate() (bool, string) {
 var (
 	// DefaultUpdaterAlreadyInstalledMessage "\nThe latest version '%s' was already installed."
 	DefaultUpdaterAlreadyInstalledMessage = "\nThe latest version '%s' was already installed."
-	// DefaultUpdaterExitDuration if options.AutoExit is true then exit the app after X
-	DefaultUpdaterExitDuration = time.Duration(14) * time.Second
 )
 
 // Run runs the update, returns true if update has been found and installed, otherwise false
 func (u *Updater) Run(setters ...optionSetter) bool {
-	opt := &Options{Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr, Silent: false, AutoExit: true} // default options
+	opt := &Options{Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr, Silent: false} // default options
 
 	for _, setter := range setters {
 		setter.Set(opt)
@@ -106,30 +125,36 @@ func (u *Updater) Run(setters ...optionSetter) bool {
 			return shouldProceedUpdate(scanner)
 		}
 
-		writef("\nA new version has been found.\nCurrent Version: %s\nNew Version: %s [%s > %s].\nUpdate now? :", u.currentVersion.String(), u.latestVersion.String(),
-			u.latestVersion.String(), u.currentVersion.String())
+		writef("\nA newer version has been found[%s > %s].\n"+
+			"Release notes: %s\n"+
+			"Update now?[%s]: ",
+			u.latestVersion.String(), u.currentVersion.String(),
+			fmt.Sprintf("https://github.com/%s/%s/releases/latest", u.owner, u.repo),
+			DefaultUpdaterYesInput[0]+"/n")
 
 		if shouldProceedUpdate() {
+			if !opt.Silent {
+				finish := ShowIndicator(opt.Stdout, true)
+
+				defer func() {
+					finish <- true
+				}()
+			}
 			// go get -u github.com/:owner/:repo
 			cmd := exec.Command("go", "get", "-u", fmt.Sprintf("github.com/%s/%s", u.owner, u.repo))
 			cmd.Stdout = opt.Stdout
 			cmd.Stderr = opt.Stderr
 
 			if err := cmd.Run(); err != nil {
-				writef("\nError while trying to go-get the package: %s.", err.Error())
+				writef("\nError while trying to get the package: %s.", err.Error())
 			}
-			writef("\nUpdate has been installed, current version: %s.", u.latestVersion.String())
+
+			writef("\010\010\010\010") // remove the loading bars
+			writef("Update has been installed, current version: %s. Please re-run your App.", u.latestVersion.String())
 
 			// TODO: normally, this should be in dev-mode machine, so a 'go build' and' & './$executable' on the current working path should be ok
 			// for now just log a message to re-run the app manually
-			writef("\nUpdater was not able to re-build and re-run your updated App.\nPlease run your App again, by yourself.")
-			if opt.AutoExit {
-				writef("\nExiting at 14 seconds...")
-				time.AfterFunc(DefaultUpdaterExitDuration, func() {
-					os.Exit(0)
-				})
-			}
-
+			//writef("\nUpdater was not able to re-build and re-run your updated App.\nPlease run your App again, by yourself.")
 			return true
 		}
 
@@ -164,8 +189,7 @@ func shouldProceedUpdate(sc *bufio.Scanner) bool {
 
 // Options the available options used iside the updater.Run func
 type Options struct {
-	Silent   bool
-	AutoExit bool
+	Silent bool
 	// Stdin specifies the process's standard input.
 	// If Stdin is nil, the process reads from the null device (os.DevNull).
 	// If Stdin is an *os.File, the process's standard input is connected
@@ -209,13 +233,6 @@ func (o OptionSet) Set(main *Options) {
 func Silent(val bool) OptionSet {
 	return func(o *Options) {
 		o.Silent = val
-	}
-}
-
-// AutoExit sets the AutoExit option to the 'val'
-func AutoExit(val bool) OptionSet {
-	return func(o *Options) {
-		o.AutoExit = val
 	}
 }
 

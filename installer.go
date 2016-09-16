@@ -17,53 +17,58 @@ var (
 	errFileDownload = errors.New("While downloading from %s. Trace: %s")
 )
 
-// DownloadZip downloads a zip file returns the downloaded filename and an error.
-func DownloadZip(zipURL string, newDir string, showOutputIndication bool) (string, error) {
-	var err error
-	var size int64
+// ShowIndicator shows a silly terminal indicator for a process, close of the finish channel is done here.
+func ShowIndicator(wr io.Writer, newLine bool) chan bool {
 	finish := make(chan bool)
-	defer func() {
-		finish <- true
-	}()
-
 	go func() {
-		if showOutputIndication {
-			print("\n|")
-			print("_")
-			print("|")
+		if newLine {
+			wr.Write([]byte("\n"))
 		}
+		wr.Write([]byte("|"))
+		wr.Write([]byte("_"))
+		wr.Write([]byte("|"))
 
 		for {
 			select {
 			case v := <-finish:
 				{
 					if v {
-						if showOutputIndication {
-							print("\010\010\010") //remove the loading chars
-						}
+						wr.Write([]byte("\010\010\010")) //remove the loading chars
 						close(finish)
 						return
 					}
 				}
 			default:
-				if showOutputIndication {
-					print("\010\010-")
-					time.Sleep(time.Second / 2)
-					print("\010\\")
-					time.Sleep(time.Second / 2)
-					print("\010|")
-					time.Sleep(time.Second / 2)
-					print("\010/")
-					time.Sleep(time.Second / 2)
-					print("\010-")
-					time.Sleep(time.Second / 2)
-					print("|")
-				}
-
+				wr.Write([]byte("\010\010-"))
+				time.Sleep(time.Second / 2)
+				wr.Write([]byte("\010\\"))
+				time.Sleep(time.Second / 2)
+				wr.Write([]byte("\010|"))
+				time.Sleep(time.Second / 2)
+				wr.Write([]byte("\010/"))
+				time.Sleep(time.Second / 2)
+				wr.Write([]byte("\010-"))
+				time.Sleep(time.Second / 2)
+				wr.Write([]byte("|"))
 			}
 		}
 
 	}()
+
+	return finish
+}
+
+// DownloadZip downloads a zip file returns the downloaded filename and an error.
+func DownloadZip(zipURL string, newDir string, showOutputIndication bool) (string, error) {
+	var err error
+	var size int64
+	if showOutputIndication {
+		finish := ShowIndicator(os.Stdout, true)
+
+		defer func() {
+			finish <- true
+		}()
+	}
 
 	os.MkdirAll(newDir, 0755)
 	tokens := strings.Split(zipURL, "/")
