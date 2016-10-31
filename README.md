@@ -1,5 +1,5 @@
 <a href="https://travis-ci.org/kataras/go-fs"><img src="https://img.shields.io/travis/kataras/go-fs.svg?style=flat-square" alt="Build Status"></a>
-<a href="https://github.com/kataras/go-fs/blob/master/LICENSE"><img src="https://img.shields.io/badge/%20license-MIT%20%20License%20-E91E63.svg?style=flat-square" alt="License"></a>
+<a href="https://github.com/kataras/go-fs/blob/0.0.5/LICENSE"><img src="https://img.shields.io/badge/%20license-MIT%20%20License%20-E91E63.svg?style=flat-square" alt="License"></a>
 <a href="https://github.com/kataras/go-fs/releases"><img src="https://img.shields.io/badge/%20release%20-%20v0.0.5-blue.svg?style=flat-square" alt="Releases"></a>
 <a href="#docs"><img src="https://img.shields.io/badge/%20docs-reference-5272B4.svg?style=flat-square" alt="Read me docs"></a>
 <a href="https://kataras.rocket.chat/channel/go-fs"><img src="https://img.shields.io/badge/%20community-chat-00BCD4.svg?style=flat-square" alt="Build Status"></a>
@@ -15,7 +15,7 @@ Installation
 The only requirement is the [Go Programming Language](https://golang.org/dl).
 
 ```bash
-$ go get -u github.com/kataras/go-fs
+$ go get -u gopkg.in/kataras/go-fs.v0
 ```
 
 
@@ -110,7 +110,7 @@ SendStaticFileHandler(filename string) http.Handler
 DirHandler(dir string, strippedPrefix string) http.Handler
 ```
 
-Read the [http_test.go](https://github.com/kataras/go-fs/blob/master/http_test.go) for more.
+Read the [http_test.go](https://github.com/kataras/go-fs/blob/0.0.5/http_test.go) for more.
 
 ### Gzip Writer
 Writes gzip compressed content to an underline io.Writer. It uses sync.Pool to reduce memory allocations.
@@ -157,7 +157,7 @@ WriteGzip(w io.Writer, b []byte) (int, error)
  Using default pool's writer to compress & write content
 
  ```go
- import "github.com/kataras/go-fs"
+ import "gopkg.in/kataras/go-fs.v0"
 
  var writer io.Writer
 
@@ -168,7 +168,7 @@ WriteGzip(w io.Writer, b []byte) (int, error)
  Using default Pool to get a gzip writer, compress & write content and finally release manually the gzip writer to the default Pool
 
  ```go
- import "github.com/kataras/go-fs"
+ import "gopkg.in/kataras/go-fs.v0"
 
  var writer io.Writer
 
@@ -184,7 +184,7 @@ WriteGzip(w io.Writer, b []byte) (int, error)
 Create and use a totally new gzip writer Pool
 
 ```go
-import "github.com/kataras/go-fs"
+import "gopkg.in/kataras/go-fs.v0"
 
 var writer io.Writer
 var gzipWriterPool = fs.NewGzipPool(fs.DefaultCompression)
@@ -196,7 +196,7 @@ n, err := gzipWriterPool.WriteGzip(writer, []byte("Compressed data and content h
 Get a gzip writer Pool with the default options(compressor's Level)
 
 ```go
-import "github.com/kataras/go-fs"
+import "gopkg.in/kataras/go-fs.v0"
 
 var writer io.Writer
 var gzipWriterPool = fs.DefaultGzipPool() // returns a new default gzip writer pool
@@ -208,7 +208,7 @@ n, err := gzipWriterPool.WriteGzip(writer, []byte("Compressed data and content h
 Acquire, Write and Release from a new(`.NewGzipPool/.DefaultGzipPool`) gzip writer Pool
 
  ```go
- import "github.com/kataras/go-fs"
+ import "gopkg.in/kataras/go-fs.v0"
 
  var writer io.Writer
 
@@ -272,7 +272,7 @@ Install() ([]string, error)
 ```go
 package main
 
-import "github.com/kataras/go-fs"
+import "gopkg.in/kataras/go-fs.v0"
 
 var testInstalledDir = fs.GetHomePath() + fs.PathSeparator + "mydir" + fs.PathSeparator
 
@@ -313,7 +313,7 @@ When you want to install different zip files to different destination directorie
 ```go
 package main
 
-import "github.com/kataras/go-fs"
+import "gopkg.in/kataras/go-fs.v0"
 
 var testInstalledDir = fs.GetHomePath() + fs.PathSeparator + "mydir" + fs.PathSeparator
 
@@ -340,11 +340,11 @@ func main(){
 
 ```
 
-Read the [installer_test.go](https://github.com/kataras/go-fs/blob/master/installer_test.go) for more.
+Read the [installer_test.go](https://github.com/kataras/go-fs/blob/0.0.5/installer_test.go) for more.
 
 
 
-You do not need any other special explanations for this package, just navigate to the [godoc](https://godoc.org/github.com/kataras/go-fs) or the [source](https://github.com/kataras/go-fs/blob/master/http_test.go) [code](https://github.com/kataras/go-fs/blob/master/installer_test.go).
+You do not need any other special explanations for this package, just navigate to the [godoc](https://godoc.org/github.com/kataras/go-fs) or the [source](https://github.com/kataras/go-fs/blob/0.0.5/http_test.go) [code](https://github.com/kataras/go-fs/blob/0.0.5/installer_test.go).
 
 
 FAQ
@@ -381,7 +381,7 @@ License can be found [here](LICENSE).
 [Travis Widget]: https://img.shields.io/travis/kataras/go-fs.svg?style=flat-square
 [Travis]: http://travis-ci.org/kataras/go-fs
 [License Widget]: https://img.shields.io/badge/license-MIT%20%20License%20-E91E63.svg?style=flat-square
-[License]: https://github.com/kataras/go-fs/blob/master/LICENSE
+[License]: https://github.com/kataras/go-fs/blob/0.0.5/LICENSE
 [Release Widget]: https://img.shields.io/badge/release-v0.0.5-blue.svg?style=flat-square
 [Release]: https://github.com/kataras/go-fs/releases
 [Chat Widget]: https://img.shields.io/badge/community-chat-00BCD4.svg?style=flat-square
