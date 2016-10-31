@@ -347,22 +347,6 @@ Read the [installer_test.go](https://github.com/kataras/go-fs/blob/master/instal
 You do not need any other special explanations for this package, just navigate to the [godoc](https://godoc.org/github.com/kataras/go-fs) or the [source](https://github.com/kataras/go-fs/blob/master/http_test.go) [code](https://github.com/kataras/go-fs/blob/master/installer_test.go).
 
 
-go-* packages
-------------
-
-| Name        | Description           
-| ------------------|:---------------------:|
-| [go-errors](https://github.com/kataras/go-errors)      | Error handling
-| [go-events](https://github.com/kataras/go-events) | EventEmmiter for Go
-| [go-websocket](https://github.com/kataras/go-errors) | A websocket server and ,optionally, client side lib  for Go
-| [go-ssh](https://github.com/kataras/go-ssh) | SSH Server, build ssh interfaces, remote commands and remote cli with ease
-| [go-gzipwriter](https://github.com/kataras/go-gzipwriter) | Write gzip data to a io.Writer
-| [go-mailer](https://github.com/kataras/go-mailer) | E-mail Sender, send rich mails with one call  
-| [rizla](https://github.com/kataras/rizla) | Monitor and live-reload of your Go App
-| [Q](https://github.com/kataras/q) | HTTP2 Web Framework, 100% compatible with net/http
-| [Iris](https://github.com/kataras/iris) | The fastest web framework. Built on top of fasthttp
-
-
 FAQ
 ------------
 Explore [these questions](https://github.com/kataras/go-fs/issues?go-fs=label%3Aquestion) or navigate to the [community chat][Chat].
