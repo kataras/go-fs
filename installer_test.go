@@ -14,7 +14,6 @@ var testInstalledDir = GetHomePath() + PathSeparator + "go-installer-test" + Pat
 
 // remote file zip | expected output(installed) directory
 var filesToInstall = map[string]string{
-	"https://github.com/kataras/q/archive/master.zip":         testInstalledDir + "q-master",
 	"https://github.com/kataras/iris/archive/master.zip":      testInstalledDir + "iris-master",
 	"https://github.com/kataras/go-errors/archive/master.zip": testInstalledDir + "go-errors-master",
 	"https://github.com/kataras/go-fs/archive/master.zip":     testInstalledDir + "go-fs-master",
