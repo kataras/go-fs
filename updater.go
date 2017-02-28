@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"context"
 )
 
 // updater.go Go app updater hosted on github, based on 'releases & tags',
@@ -58,8 +59,11 @@ func GetUpdater(owner string, repo string, currentReleaseVersion string) (*Updat
 	client := github.NewClient(nil) // unuthenticated client, 60 req/hour
 	///TODO: rate limit error catching( impossible to same client checks 60 times for github updates, but we should do that check)
 
+	// assign a new instace of context to support go-github's current API (https://github.com/google/go-github/issues/526)
+	ctx := context.TODO()
+	
 	// get the latest release, delay depends on the user's internet connection's download speed
-	latestRelease, response, err := client.Repositories.GetLatestRelease(owner, repo)
+	latestRelease, response, err := client.Repositories.GetLatestRelease(ctx, owner, repo)
 	if err != nil {
 		return nil, errCantFetchRepo.Format(owner+":"+repo, err)
 	}
