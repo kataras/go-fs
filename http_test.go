@@ -2,9 +2,9 @@ package fs
 
 import (
 	"bytes"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -15,7 +15,7 @@ func TestStaticContentHandler(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	contents, err := ioutil.ReadFile("./http.go")
+	contents, err := os.ReadFile("./http.go")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +88,7 @@ func TestFaviconHandler(t *testing.T) {
 	}
 
 	body := res.Body.Bytes()
-	favContents, err := ioutil.ReadFile(favPath)
+	favContents, err := os.ReadFile(favPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestSendStaticFileHandler(t *testing.T) {
 	}
 
 	body := res.Body.Bytes()
-	fileContents, err := ioutil.ReadFile(sendFile)
+	fileContents, err := os.ReadFile(sendFile)
 	if err != nil {
 		t.Fatal(err)
 	}

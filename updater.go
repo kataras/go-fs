@@ -2,14 +2,15 @@ package fs
 
 import (
 	"bufio"
+	"context"
+	"errors"
 	"fmt"
-	"github.com/google/go-github/github"
-	"github.com/hashicorp/go-version"
-	"github.com/kataras/go-errors"
 	"io"
 	"os"
 	"os/exec"
-	"context"
+
+	"github.com/google/go-github/github"
+	"github.com/hashicorp/go-version"
 )
 
 // updater.go Go app updater hosted on github, based on 'releases & tags',
@@ -41,9 +42,8 @@ import (
 // }
 
 var (
-	errUpdaterUnknown = errors.New("Updater: Unknown error: %s")
-	errCantFetchRepo  = errors.New("Updater: Error while trying to fetch the repository: %s. Trace: %s")
-	errAccessRepo     = errors.New("Updater: Couldn't access to the github repository, please make sure you're connected to the internet")
+	errCantFetchRepo = errors.New("error while trying to fetch the remote repository")
+	errAccessRepo    = errors.New("couldn't access to the github repository, please make sure you're connected to the internet and you have access to read")
 )
 
 // Updater is the base struct for the Updater feature
@@ -61,11 +61,11 @@ func GetUpdater(owner string, repo string, currentReleaseVersion string) (*Updat
 
 	// assign a new instace of context to support go-github's current API (https://github.com/google/go-github/issues/526)
 	ctx := context.TODO()
-	
+
 	// get the latest release, delay depends on the user's internet connection's download speed
 	latestRelease, response, err := client.Repositories.GetLatestRelease(ctx, owner, repo)
 	if err != nil {
-		return nil, errCantFetchRepo.Format(owner+":"+repo, err)
+		return nil, fmt.Errorf("%w: %s:%s: %s", errCantFetchRepo, owner, repo, err.Error())
 	}
 
 	if c := response.StatusCode; c != 200 && c != 201 && c != 202 && c != 301 && c != 302 && c == 304 {
@@ -259,7 +259,6 @@ func Stdin(val io.Reader) OptionSet {
 //
 // If either is nil, Run connects the corresponding file descriptor
 // to the null device (os.DevNull).
-//
 func Stdout(val io.Writer) OptionSet {
 	return func(o *Options) {
 		o.Stdout = val

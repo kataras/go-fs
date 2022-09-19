@@ -1,7 +1,7 @@
 package fs
 
 import (
-	"io/ioutil"
+	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -24,12 +24,6 @@ var (
 	contentTypeHeader = "Content-Type"
 	// contentLength represents the header["Content-Length"]
 	contentLength = "Content-Length"
-	// contentEncodingHeader represents the header["Content-Encoding"]
-	contentEncodingHeader = "Content-Encoding"
-	// varyHeader represents the header "Vary"
-	varyHeader = "Vary"
-	// acceptEncodingHeader represents the header key & value "Accept-Encoding"
-	acceptEncodingHeader = "Accept-Encoding"
 	// lastModified "Last-Modified"
 	lastModified = "Last-Modified"
 	// ifModifiedSince "If-Modified-Since"
@@ -95,7 +89,7 @@ func StaticContentHandler(data []byte, contentType string) http.Handler {
 // StaticFileHandler serves a static file such as css,js, favicons, static images
 // it stores the file contents to the memory, doesn't supports seek because we read all-in-one the file, but seek is supported by net/http.ServeContent
 func StaticFileHandler(filename string) http.Handler {
-	fcontents, err := ioutil.ReadFile(filename) // cache the contents of the file, this is the difference from net/http's impl, this is used only for static files, like favicons, css and so on
+	fcontents, err := os.ReadFile(filename) // cache the contents of the file, this is the difference from net/http's impl, this is used only for static files, like favicons, css and so on
 	if err != nil {
 		return errorHandler(http.StatusBadRequest)
 	}
@@ -119,7 +113,7 @@ func SendStaticFileHandler(filename string) http.Handler {
 func FaviconHandler(favPath string) http.Handler {
 	f, err := os.Open(favPath)
 	if err != nil {
-		panic(errFileOpen.Format(favPath, err.Error()))
+		panic(fmt.Errorf("%w: %s: %s", errFileOpen, favPath, err.Error()))
 	}
 	defer f.Close()
 	fi, _ := f.Stat()
@@ -139,13 +133,11 @@ func FaviconHandler(favPath string) http.Handler {
 	// copy the bytes here in order to cache and not read the ico on each request.
 	cacheFav := make([]byte, fi.Size())
 	if _, err = f.Read(cacheFav); err != nil {
-		panic(errFileRead.Format(favPath, "Favicon: "+err.Error()))
+		panic(fmt.Errorf("%w: %s: %s", errFileRead, favPath, err.Error()))
 	}
 
 	return StaticContentHandler(cacheFav, cType)
 }
-
-const slash = "/"
 
 // DirHandler serves a directory as web resource
 // accepts a system Directory (string),

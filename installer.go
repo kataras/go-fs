@@ -1,7 +1,8 @@
 package fs
 
 import (
-	"github.com/kataras/go-errors"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -11,10 +12,10 @@ import (
 )
 
 var (
-	// errNoZip returns an error with message: 'While creating file '+filename'. It's not a zip'
-	errNoZip = errors.New("While installing file '%s'. It's not a zip")
-	// errFileDownload returns an error with message: 'While downloading from +specific url. Trace: +specific error'
-	errFileDownload = errors.New("While downloading from %s. Trace: %s")
+	// errNoZip describes the error when the file is not compressed.
+	errNoZip = errors.New("file not a zip")
+	// errFileDownload describes the error when downloading a file was failed.
+	errFileDownload = errors.New("download file")
 )
 
 // ShowIndicator shows a silly terminal indicator for a process, close of the finish channel is done here.
@@ -74,23 +75,23 @@ func DownloadZip(zipURL string, newDir string, showOutputIndication bool) (strin
 	tokens := strings.Split(zipURL, "/")
 	fileName := newDir + tokens[len(tokens)-1]
 	if !strings.HasSuffix(fileName, ".zip") {
-		return "", errNoZip.Format(fileName)
+		return "", fmt.Errorf("filename: %s: %w", fileName, errNoZip)
 	}
 
 	output, err := os.Create(fileName)
 	if err != nil {
-		return "", errFileCreate.Format(err.Error())
+		return "", fmt.Errorf("%w: %s", errFileCreate, err.Error())
 	}
 	defer output.Close()
 	response, err := http.Get(zipURL)
 	if err != nil {
-		return "", errFileDownload.Format(zipURL, err.Error())
+		return "", fmt.Errorf("%w: %s: %s", errFileDownload, zipURL, err.Error())
 	}
 	defer response.Body.Close()
 
 	size, err = io.Copy(output, response.Body)
 	if err != nil {
-		return "", errFileCopy.Format(err.Error())
+		return "", fmt.Errorf("%w: %s", errFileCopy, err.Error())
 	}
 
 	if showOutputIndication {
@@ -155,7 +156,7 @@ func (i *Installer) Add(remoteFilesZip ...string) {
 	i.mu.Unlock()
 }
 
-var errNoFilesToInstall = errors.New("No files to install, please use the .Add method to add remote zip files")
+var errNoFilesToInstall = errors.New("no files to install, please use the .Add method to add remote zip files")
 
 // Install installs all RemoteFiles, when this function called then the RemoteFiles are being resseted
 // returns all installed paths and an error (if any)
@@ -165,7 +166,7 @@ func (i *Installer) Install() ([]string, error) {
 		return nil, errNoFilesToInstall
 	}
 
-	allErrors := *errors.New("")
+	var allErrors []string
 	var installedDirectories []string // not strict to the remote file len because it continues on error
 
 	// create a copy of the remote files
@@ -177,7 +178,7 @@ func (i *Installer) Install() ([]string, error) {
 	for _, remoteFileZip := range remoteFiles {
 		p, err := Install(remoteFileZip, i.InstallDir, i.Indicator)
 		if err != nil {
-			allErrors = allErrors.AppendErr(err)
+			allErrors = append(allErrors, err.Error())
 			// add back the remote file if the install of this remote file has failed
 			i.RemoteFiles = append(i.RemoteFiles, remoteFileZip)
 		}
@@ -185,9 +186,9 @@ func (i *Installer) Install() ([]string, error) {
 		installedDirectories = append(installedDirectories, p)
 	}
 	i.mu.Unlock()
-	if !allErrors.IsAppended() {
-		return installedDirectories, nil
+	if len(allErrors) > 0 {
+		return installedDirectories, fmt.Errorf(strings.Join(allErrors, ": "))
 	}
 
-	return installedDirectories, allErrors
+	return installedDirectories, nil
 }

@@ -3,9 +3,9 @@ package fs
 
 import (
 	"archive/zip"
-	"github.com/kataras/go-errors"
+	"errors"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"os"
 	"path/filepath"
@@ -50,25 +50,29 @@ func GetParentDir(targetDirectory string) string {
 }
 
 var (
-	// errFileOpen returns an error with message: 'While opening a file. Trace: +specific error'
-	errFileOpen = errors.New("While opening a file. Trace: %s")
-	// errFileCreate returns an error with message: 'While creating a file. Trace: +specific error'
-	errFileCreate = errors.New("While creating a file. Trace: %s")
-	// errFileRemove returns an error with message: 'While removing a file. Trace: +specific error'
-	errFileRemove = errors.New("While removing a file. Trace: %s")
-	// errFileCopy returns an error with message: 'While copying files. Trace: +specific error'
-	errFileCopy = errors.New("While copying files. Trace: %s")
-	// errDirCreate returns an error with message: 'Unable to create directory on '+root dir'. Trace: +specific error
-	errDirCreate = errors.New("Unable to create directory on '%s'. Trace: %s")
-	// errNotDir returns an error with message: 'Source is not a directory! Source path: '+given path'
-	errNotDir = errors.New("Source is not a directory! Source path: %s")
-	// errFileRead returns an error with message: 'Couldn't read the data bytes: '+given file path + trance'
-	errFileRead = errors.New("Couldn't read the data bytes: %s")
+	// errFileOpen describes the error when opening a file.
+	errFileOpen = errors.New("open file")
+	// errFileCreate describes the error when creating a file.
+	errFileCreate = errors.New("create file")
+	// errFileRemove describes the error when deleting a file.
+	errFileRemove = errors.New("delete file")
+	// errFileCopy decsribes the error when copying a file.
+	errFileCopy = errors.New("copy file")
+	// errDirCreate describes the error when creating a directory.
+	errDirCreate = errors.New("create directory")
+	// errNotDir describes the error when a source file is not a directory.
+	errNotDir = errors.New("source is not a directory")
+	// errFileRead describes the error when reading a file.
+	errFileRead = errors.New("read file")
 )
 
 // RemoveFile removes a file or directory and returns an error, if any
 func RemoveFile(filePath string) error {
-	return errFileRemove.With(os.RemoveAll(filePath))
+	err := os.RemoveAll(filePath)
+	if err != nil {
+		return fmt.Errorf("%s: %w", filePath, errFileRemove)
+	}
+	return nil
 }
 
 // RenameDir renames (moves) oldpath to newpath.
@@ -87,26 +91,26 @@ func CopyFile(source string, destination string) error {
 	reader, err := os.Open(source)
 
 	if err != nil {
-		return errFileOpen.Format(err.Error())
+		return fmt.Errorf("%w: %s", errFileCopy, err.Error())
 	}
 
 	defer reader.Close()
 
 	writer, err := os.Create(destination)
 	if err != nil {
-		return errFileCreate.Format(err.Error())
+		return fmt.Errorf("%w: %s", errFileCreate, err.Error())
 	}
 
 	defer writer.Close()
 
 	_, err = io.Copy(writer, reader)
 	if err != nil {
-		return errFileCopy.Format(err.Error())
+		return fmt.Errorf("%w: %s", errFileCopy, err.Error())
 	}
 
 	err = writer.Sync()
 	if err != nil {
-		return errFileCopy.Format(err.Error())
+		return fmt.Errorf("%w: %s", errFileCopy, err.Error())
 	}
 
 	return nil
@@ -123,7 +127,7 @@ func CopyDir(source string, dest string) (err error) {
 	}
 
 	if !fi.IsDir() {
-		return errNotDir.Format(source)
+		return fmt.Errorf("%s: %w", source, errNotDir)
 	}
 
 	// create dest dir
@@ -133,7 +137,7 @@ func CopyDir(source string, dest string) (err error) {
 		return err
 	}
 
-	entries, err := ioutil.ReadDir(source)
+	entries, err := os.ReadDir(source)
 
 	for _, entry := range entries {
 
@@ -165,7 +169,7 @@ func Unzip(archive string, target string) (string, error) {
 	}
 
 	if err := os.MkdirAll(target, 0755); err != nil {
-		return "", errDirCreate.Format(target, err.Error())
+		return "", fmt.Errorf("%w: %s", errDirCreate, err.Error())
 	}
 	createdFolder := ""
 	for _, file := range reader.File {
@@ -181,18 +185,18 @@ func Unzip(archive string, target string) (string, error) {
 
 		fileReader, err := file.Open()
 		if err != nil {
-			return "", errFileOpen.Format(err.Error())
+			return "", fmt.Errorf("%w: %s", errFileOpen, err.Error())
 		}
 		defer fileReader.Close()
 
 		targetFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
 		if err != nil {
-			return "", errFileOpen.Format(err.Error())
+			return "", fmt.Errorf("%w: %s", errFileOpen, err.Error())
 		}
 		defer targetFile.Close()
 
 		if _, err := io.Copy(targetFile, fileReader); err != nil {
-			return "", errFileCopy.Format(err.Error())
+			return "", fmt.Errorf("%w: %s", errFileCopy, err.Error())
 		}
 
 	}
@@ -211,9 +215,9 @@ func Unzip(archive string, target string) (string, error) {
 // system's mime.types file(s) if available under one or more of these
 // names:
 //
-//   /etc/mime.types
-//   /etc/apache2/mime.types
-//   /etc/apache/mime.types
+//	/etc/mime.types
+//	/etc/apache2/mime.types
+//	/etc/apache/mime.types
 //
 // On Windows, MIME types are extracted from the registry.
 //
