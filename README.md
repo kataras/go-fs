@@ -1,6 +1,6 @@
 # Go FS
 
-<a href="https://github.com/kataras/go-fs/actions"><img src="https://img.shields.io/github/workflow/status/kataras/go-fs/CI/maste?style=flat-square" alt="Build Status"></a>
+<a href="https://github.com/kataras/go-fs/actions"><img src="https://img.shields.io/github/workflow/status/kataras/go-fs/CI/master?style=flat-square" alt="Build Status"></a>
 <a href="https://github.com/kataras/go-fs/blob/master/LICENSE"><img src="https://img.shields.io/badge/%20license-MIT%20%20License%20-E91E63.svg?style=flat-square" alt="License"></a>
 <a href="https://github.com/kataras/go-fs/releases"><img src="https://img.shields.io/badge/%20release%20-%20v0.0.5-blue.svg?style=flat-square" alt="Releases"></a>
 <a href="#docs"><img src="https://img.shields.io/badge/%20docs-reference-5272B4.svg?style=flat-square" alt="Read me docs"></a>
