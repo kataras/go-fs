@@ -29,9 +29,9 @@ func TestStaticContentHandler(t *testing.T) {
 			status, http.StatusOK)
 	}
 
-	if ctype := res.Header().Get("Content-Type"); ctype != "text/x-go; charset=utf-8" {
+	if ctype := res.Header().Get("Content-Type"); ctype != "text/plain; charset=utf-8" {
 		t.Errorf("handler returned wrong content type: got %v want %v",
-			ctype, "text/x-go; charset=utf-8")
+			ctype, "text/plain; charset=utf-8")
 	}
 
 	body := res.Body.String()
