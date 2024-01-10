@@ -54,9 +54,9 @@ func TestDirHandler(t *testing.T) {
 			status, http.StatusOK)
 	}
 
-	if ctype := res.Header().Get("Content-Type"); ctype != "text/x-go; charset=utf-8" {
+	if ctype := res.Header().Get("Content-Type"); ctype != "text/plain; charset=utf-8" {
 		t.Errorf("handler returned wrong content type: got %v want %v",
-			ctype, "text/x-go; charset=utf-8")
+			ctype, "text/plain; charset=utf-8")
 	}
 
 	body := res.Body.String()
@@ -82,9 +82,9 @@ func TestFaviconHandler(t *testing.T) {
 			status, http.StatusOK)
 	}
 
-	if ctype := res.Header().Get("Content-Type"); ctype != "image/vnd.microsoft.icon; charset=utf-8" {
+	if ctype := res.Header().Get("Content-Type"); ctype != "image/x-icon; charset=utf-8" {
 		t.Errorf("handler returned wrong content type: got %v want %v",
-			ctype, "image/vnd.microsoft.icon; charset=utf-8")
+			ctype, "image/x-icon; charset=utf-8")
 	}
 
 	body := res.Body.Bytes()
@@ -114,7 +114,7 @@ func TestSendStaticFileHandler(t *testing.T) {
 			status, http.StatusOK)
 	}
 
-	if ctype := res.Header().Get("Content-Type"); ctype != "application/zip; charset=utf-8" {
+	if ctype := res.Header().Get("Content-Type"); ctype != "application/x-zip-compressed; charset=utf-8" {
 		t.Errorf("handler returned wrong content type: got %v want %v",
 			ctype, "application/zip; charset=utf-8")
 	}
